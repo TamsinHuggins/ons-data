@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 from openpyxl import load_workbook
 from load import get_dfs_from_sheets
+from transform import count_column_names
 
 
 
@@ -12,7 +13,8 @@ def main():
     print(data_dir)
     workbook = load_workbook(data_dir)
     df_dict = get_dfs_from_sheets(workbook)
-    print(df_dict)
+    count_column_names(df_dict)
+    
 
 
 
