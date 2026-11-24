@@ -97,8 +97,8 @@ python -m ons_mental_health.pipeline
 ```mermaid
 flowchart LR
     A["Raw ONS workbook<br/>data/raw/"] -->|load.py| B["11 tables<br/>(dict of DataFrames)"]
-    B -->|transform.py| C["One unioned table<br/>data/interim/"]
-    C -.->|clean.py| D["Cleaned table"]
+    B -->|transform.py| C["One unioned table"]
+    C -->|clean.py| D["Cleaned table<br/>data/interim/"]
     D -.->|validate.py| E["Analysis-ready dataset<br/>data/processed/"]
     E -.-> F["Analysis notebook"]
 ```
@@ -109,7 +109,7 @@ Solid arrows are implemented; dashed arrows are [planned](#roadmap).
 | ----------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Load        | [`load.py`](src/ons_mental_health/load.py)           | Reads each sheet's **named Excel table**, the exact cell range ONS defines for the data, so notes above and below each table are excluded automatically        |
 | Transform   | [`transform.py`](src/ons_mental_health/transform.py) | Standardises column names, adds a `source_table` column so every row can be traced back to its table, and stacks all tables into one, matching columns by name |
-| Clean       | [`clean.py`](src/ons_mental_health/clean.py)         | Replaces suppression markers with missing values, converts estimates to numbers and flags suppressed rows. _Written and tested; not yet run by the pipeline_ |
+| Clean       | [`clean.py`](src/ons_mental_health/clean.py)         | Replaces suppression markers with missing values, converts estimates to numbers and flags suppressed rows |
 | Orchestrate | [`pipeline.py`](src/ons_mental_health/pipeline.py)   | Runs the stages in order and writes the output. It is the only module that reads or writes files                                                               |
 
 <!-- Add a row for each new stage (clean, validate) as it is implemented. -->
@@ -122,7 +122,7 @@ Solid arrows are implemented; dashed arrows are [planned](#roadmap).
 ons-data/
 ├── data/
 │   ├── raw/            # Original ONS download, never edited (git-ignored)
-│   ├── interim/        # Intermediate outputs, e.g. unioned tables (git-ignored)
+│   ├── interim/        # Intermediate outputs, e.g. the cleaned table (git-ignored)
 │   └── processed/      # Final analysis-ready data (git-ignored)
 ├── docs/               # Methodology and supporting documentation
 ├── notebooks/          # Exploratory work; not the source of truth
@@ -143,11 +143,11 @@ ons-data/
 
 | File                                                  | Stage   | Description                                                                                             |
 | ----------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------- |
-| `data/interim/mentalhealth2to27april2025_unioned.csv` | Interim | All 11 data tables stacked into one table (572 rows). Column names standardised, values not yet cleaned |
+| `data/interim/mentalhealth2to27april2025_cleaned.csv` | Interim | All 11 data tables stacked into one table (572 rows). Column names standardised; suppression markers replaced and flagged (8 rows); estimates and confidence limits numeric. Further cleaning still planned |
 
 <!-- Add processed outputs here as they are produced. -->
 
-### Data dictionary: unioned table
+### Data dictionary: cleaned table
 
 | Column                            | Description                                                                                   |
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -161,6 +161,7 @@ ons-data/
 | `sample_size`                     | Number of respondents, rounded to the nearest 10                                              |
 | `weighted_count`                  | Population the group represents, after survey weighting                                       |
 | `notes`                           | ONS note references, e.g. `[note 4]` marks a derived total category                           |
+| `is_suppressed`                   | `True` if ONS suppressed any of the estimate or confidence-limit values on this row; those values are empty |
 
 A column that does not exist in a given source table is left empty (NaN) for that table's rows.
 
@@ -294,7 +295,7 @@ I reviewed all AI-generated code and take responsibility for everything in this 
 - [x] Pipeline entry point writing to `data/interim/`
 - [x] Cleaning: suppression markers → NaN plus an `is_suppressed` flag column
 - [x] Cleaning: convert estimates and confidence limits to numeric types
-- [ ] Run the cleaning steps in the pipeline
+- [x] Run the cleaning step in the pipeline
 - [ ] Cleaning: standardise response labels
 - [ ] Cleaning: flag derived total rows
 - [ ] Cleaning: combine estimate columns into `estimate` + `unit`
