@@ -15,6 +15,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DATA_FILE = PROJECT_ROOT / "data" / "raw" / "mentalhealth2to27april2025.xlsx"
 INTERIM_DATA_DIR = PROJECT_ROOT / "data" / "interim"
 UNIONED_TABLES_FILE = INTERIM_DATA_DIR / "mentalhealth2to27april2025_unioned.csv"
+# Shorthand ONS uses in place of a number. See the workbook's Cover sheet.
+SUPPRESSION_MARKERS = ["[c]", "[w]", "[low]", "[high]", "[u]", "[x]"]
+
 
 
 def main() -> None:
