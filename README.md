@@ -109,7 +109,7 @@ Solid arrows are implemented; dashed arrows are [planned](#roadmap).
 | ----------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Load        | [`load.py`](src/ons_mental_health/load.py)           | Reads each sheet's **named Excel table**, the exact cell range ONS defines for the data, so notes above and below each table are excluded automatically        |
 | Transform   | [`transform.py`](src/ons_mental_health/transform.py) | Standardises column names, adds a `source_table` column so every row can be traced back to its table, and stacks all tables into one, matching columns by name |
-| Clean       | [`clean.py`](src/ons_mental_health/clean.py)         | Replaces suppression markers with missing values, converts estimates to numbers and flags suppressed rows |
+| Clean       | [`clean.py`](src/ons_mental_health/clean.py)         | Replaces suppression markers with missing values, converts estimates to numbers and flags suppressed rows                                                      |
 | Orchestrate | [`pipeline.py`](src/ons_mental_health/pipeline.py)   | Runs the stages in order and writes the output. It is the only module that reads or writes files                                                               |
 
 <!-- Add a row for each new stage (clean, validate) as it is implemented. -->
@@ -141,26 +141,26 @@ ons-data/
 
 ## Outputs
 
-| File                                                  | Stage   | Description                                                                                             |
-| ----------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| File                                                  | Stage   | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `data/interim/mentalhealth2to27april2025_cleaned.csv` | Interim | All 11 data tables stacked into one table (572 rows). Column names standardised; suppression markers replaced and flagged (8 rows); estimates and confidence limits numeric. Further cleaning still planned |
 
 <!-- Add processed outputs here as they are produced. -->
 
 ### Data dictionary: cleaned table
 
-| Column                            | Description                                                                                   |
-| --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `source_table`                    | ONS table the row came from, e.g. `Table_4`                                                   |
-| `breakdown_category`              | Grouping variable, e.g. `Age bands`, `Sex`, `Depression indicator`                            |
-| `breakdown`                       | Group within the category, e.g. `Moderate to severe symptoms`                                 |
-| `response_options`                | Survey answer the estimate refers to, e.g. `Agree` (empty for mean-score tables)              |
-| `estimate_(%)`                    | Percentage of the group giving that response                                                  |
-| `estimate_(mean_score_out_of_10)` | Mean score, for Tables 4 and 9 only                                                           |
-| `lcl`, `ucl`                      | Lower and upper 95% confidence limits. **Units match whichever estimate column is filled in** |
-| `sample_size`                     | Number of respondents, rounded to the nearest 10                                              |
-| `weighted_count`                  | Population the group represents, after survey weighting                                       |
-| `notes`                           | ONS note references, e.g. `[note 4]` marks a derived total category                           |
+| Column                            | Description                                                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `source_table`                    | ONS table the row came from, e.g. `Table_4`                                                                 |
+| `breakdown_category`              | Grouping variable, e.g. `Age bands`, `Sex`, `Depression indicator`                                          |
+| `breakdown`                       | Group within the category, e.g. `Moderate to severe symptoms`                                               |
+| `response_options`                | Survey answer the estimate refers to, e.g. `Agree` (empty for mean-score tables)                            |
+| `estimate_(%)`                    | Percentage of the group giving that response                                                                |
+| `estimate_(mean_score_out_of_10)` | Mean score, for Tables 4 and 9 only                                                                         |
+| `lcl`, `ucl`                      | Lower and upper 95% confidence limits. **Units match whichever estimate column is filled in**               |
+| `sample_size`                     | Number of respondents, rounded to the nearest 10                                                            |
+| `weighted_count`                  | Population the group represents, after survey weighting                                                     |
+| `notes`                           | ONS note references, e.g. `[note 4]` marks a derived total category                                         |
 | `is_suppressed`                   | `True` if ONS suppressed any of the estimate or confidence-limit values on this row; those values are empty |
 
 A column that does not exist in a given source table is left empty (NaN) for that table's rows.
@@ -171,32 +171,32 @@ A column that does not exist in a given source table is left empty (NaN) for tha
 
 A log of every data issue found, and how it was handled. Each decision is implemented in code and covered by tests wherever possible.
 
-| #   | Issue                                                                                                              | Decision                                                                                                                             | Status     |
-| --- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-| 1   | Each sheet has rows of notes above the table, and the header row varies between sheets (row 10 or 11)              | Read each sheet's **named Excel table** rather than guessing the header row. This is robust to layout changes in future releases     | ✅ Done    |
-| 2   | Column names contain spaces and capitals, and could differ in style between tables                                 | Normalise to `lower_snake_case` **before** combining, so matching columns line up rather than producing duplicate half-empty columns | ✅ Done    |
-| 3   | Normalising could make two different columns in one table end up with the same name                                | Raise a `ValueError` naming the clashing columns rather than silently overwriting one of them                                        | ✅ Done    |
-| 4   | Combining tables loses track of where each row came from, and `lcl`/`ucl` mean different units in different tables | Add a `source_table` column to every row before combining                                                                            | ✅ Done    |
-| 5   | Tables have different sets of columns                                                                              | Union by column name; missing values become NaN. Every column is kept, so no information is lost                                     | ✅ Done    |
-| 6   | Row labels (the index) repeat after stacking tables                                                                | Reset to a fresh index starting at 0                                                                                                 | ✅ Done    |
-| 7   | An empty input would silently produce empty outputs                                                                | Fail loudly with a clear error message                                                                                               | ✅ Done    |
+| #   | Issue                                                                                                              | Decision                                                                                                                                                                                                                                        | Status     |
+| --- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 1   | Each sheet has rows of notes above the table, and the header row varies between sheets (row 10 or 11)              | Read each sheet's **named Excel table** rather than guessing the header row. This is robust to layout changes in future releases                                                                                                                | ✅ Done    |
+| 2   | Column names contain spaces and capitals, and could differ in style between tables                                 | Normalise to `lower_snake_case` **before** combining, so matching columns line up rather than producing duplicate half-empty columns                                                                                                            | ✅ Done    |
+| 3   | Normalising could make two different columns in one table end up with the same name                                | Raise a `ValueError` naming the clashing columns rather than silently overwriting one of them                                                                                                                                                   | ✅ Done    |
+| 4   | Combining tables loses track of where each row came from, and `lcl`/`ucl` mean different units in different tables | Add a `source_table` column to every row before combining                                                                                                                                                                                       | ✅ Done    |
+| 5   | Tables have different sets of columns                                                                              | Union by column name; missing values become NaN. Every column is kept, so no information is lost                                                                                                                                                | ✅ Done    |
+| 6   | Row labels (the index) repeat after stacking tables                                                                | Reset to a fresh index starting at 0                                                                                                                                                                                                            | ✅ Done    |
+| 7   | An empty input would silently produce empty outputs                                                                | Fail loudly with a clear error message                                                                                                                                                                                                          | ✅ Done    |
 | 8   | Suppression markers (`[c]`, `[w]`, `[low]`) in numeric columns make them text                                      | Convert to NaN, convert the columns to numbers, and flag affected rows with `is_suppressed`. Any unexpected text raises an error. Simplification: the marker type is not kept, so `[w]` (a true zero) can't be told apart from `[c]` (withheld) | ✅ Done    |
-| 9   | Inconsistent labels, e.g. `Strongly Agree or Agree` vs `Strongly agree or Agree`                                   | Standardise text values                                                                                                              | 🔲 Planned |
-| 10  | Derived total rows (`[note 4]`) sit alongside the detailed categories, risking double counting                     | Flag them with an `is_derived` column rather than deleting them                                                                      | 🔲 Planned |
-| 11  | Two estimate columns with different units                                                                          | Combine into `estimate` plus a `unit` column                                                                                         | 🔲 Planned |
+| 9   | Inconsistent labels, e.g. `Strongly Agree or Agree` vs `Strongly agree or Agree`                                   | Standardise text values                                                                                                                                                                                                                         | 🔲 Planned |
+| 10  | Derived total rows (`[note 4]`) sit alongside the detailed categories, risking double counting                     | Flag them with an `is_derived` column rather than deleting them                                                                                                                                                                                 | 🔲 Planned |
+| 11  | Two estimate columns with different units                                                                          | Combine into `estimate` plus a `unit` column                                                                                                                                                                                                    | 🔲 Planned |
 
 <!-- Add new issues as they are discovered; update Status as they are resolved. -->
 
 **ONS suppression markers** (from the workbook's Cover sheet):
 
-| Marker  | Meaning                                                                     |
-| ------- | --------------------------------------------------------------------------- |
-| `[c]`   | Suppressed: based on fewer than 3 respondents (quality and confidentiality) |
-| `[w]`   | No people estimated to be in this category                                  |
-| `[low]` | Estimate is less than 1 but not zero                                        |
-| `[high]` | Estimate is more than 99                                                   |
-| `[u]`   | Suppressed: the breakdown is based on 10 or fewer respondents (low reliability) |
-| `[x]`   | Not available, e.g. the question was not asked                              |
+| Marker   | Meaning                                                                         |
+| -------- | ------------------------------------------------------------------------------- |
+| `[c]`    | Suppressed: based on fewer than 3 respondents (quality and confidentiality)     |
+| `[w]`    | No people estimated to be in this category                                      |
+| `[low]`  | Estimate is less than 1 but not zero                                            |
+| `[high]` | Estimate is more than 99                                                        |
+| `[u]`    | Suppressed: the breakdown is based on 10 or fewer respondents (low reliability) |
+| `[x]`    | Not available, e.g. the question was not asked                                  |
 
 The markers to handle are set in `pipeline.py` and passed to the cleaning function, so they can be updated for future releases without changing the cleaning code.
 
@@ -217,9 +217,9 @@ python -m pytest -rP             # also show printed output for passing tests
 
 <!-- Update the count when tests are added. -->
 
-| Test file                                            | Covers                                                                               |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [`tests/test_transform.py`](tests/test_transform.py) | Name normalisation, clash detection, column counting, provenance column, table union |
+| Test file                                            | Covers                                                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [`tests/test_transform.py`](tests/test_transform.py) | Name normalisation, clash detection, column counting, provenance column, table union                         |
 | [`tests/test_clean.py`](tests/test_clean.py)         | Suppression markers: conversion to NaN, numeric types, row flag, unexpected values, configurable marker list |
 
 <!-- Add a row for each new test file. -->
@@ -245,43 +245,28 @@ How the tests are written:
 
 ## Skills demonstrated
 
-| Skill                             | Evidence in this project                                                                                                                                                                                          |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Unit testing**                  | pytest suite with fixtures, parametrisation, error-case tests (`pytest.raises` with message matching) and DataFrame equality checks                                                                               |
-| **Test-driven development**       | Tests and docstrings written before each implementation; red → green → refactor                                                                                                                                   |
+| Skill                             | Evidence in this project                                                                                                                                                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit testing**                  | pytest suite with fixtures, parametrisation, error-case tests (`pytest.raises` with message matching) and DataFrame equality checks                                                                                                                     |
+| **Test-driven development**       | Tests and docstrings written before each implementation; red → green → refactor                                                                                                                                                                         |
 | **Modular design**                | One responsibility per module (load / transform / clean / pipeline); small single-purpose functions; file reading and writing kept in the pipeline module only; settings such as suppression markers passed in from the pipeline rather than hard-coded |
-| **Defensive programming**         | Errors raised early with clear messages for invalid input (empty input, column name clashes, unexpected text in numeric columns) rather than silently producing wrong results                                     |
-| **Data engineering**              | Reading named tables from Excel with openpyxl; harmonising column names across tables; unioning tables with different columns; recording where each row came from; separate raw / interim / processed data stages |
-| **Data manipulation with pandas** | Building DataFrames, renaming columns, `concat` with index reset, `value_counts`, vectorised boolean masks (`isin`, `&`, `~`, `any`), type conversion with `to_numeric`, handling missing values             |
-| **Python packaging**              | `src/` layout, `pyproject.toml`, editable install, separate runtime and development dependencies                                                                                                                  |
-| **Reproducibility**               | Project-root-anchored `pathlib` paths; one command runs the pipeline end to end; raw data is never modified                                                                                                       |
-| **Code documentation**            | Google-style docstrings with `Args` / `Returns` / `Raises`; type hints throughout                                                                                                                                 |
-| **Version control**               | Git with GitHub Flow; issues linked to pull requests                                                                                                                                                              |
+| **Defensive programming**         | Errors raised early with clear messages for invalid input (empty input, column name clashes, unexpected text in numeric columns) rather than silently producing wrong results                                                                           |
+| **Data engineering**              | Reading named tables from Excel with openpyxl; harmonising column names across tables; unioning tables with different columns; recording where each row came from; separate raw / interim / processed data stages                                       |
+| **Data manipulation with pandas** | Building DataFrames, renaming columns, `concat` with index reset, `value_counts`, vectorised boolean masks (`isin`, `&`, `~`, `any`), type conversion with `to_numeric`, handling missing values                                                        |
+| **Python packaging**              | `src/` layout, `pyproject.toml`, editable install, separate runtime and development dependencies                                                                                                                                                        |
+| **Reproducibility**               | Project-root-anchored `pathlib` paths; one command runs the pipeline end to end; raw data is never modified                                                                                                                                             |
+| **Code documentation**            | Google-style docstrings with `Args` / `Returns` / `Raises`; type hints throughout                                                                                                                                                                       |
+| **Version control**               | Git with GitHub Flow; issues linked to pull requests                                                                                                                                                                                                    |
 
 <!-- Add rows as new skills are demonstrated, e.g. CI, data validation, linting. -->
 
 ### Capabilities evidenced
 
-| Capability                                                                                                           | How this project evidences it                                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Identify the appropriate engineering support to design and provide products for the organisation_                   | Starts from a defined user and question; delivers a documented data product with a data dictionary; uses a reproducible, tested and packaged pipeline |
+| Capability                                                                                                           | How this project evidences it                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| _Identify the appropriate engineering support to design and provide products for the organisation_                   | Starts from a defined user and question; delivers a documented data product with a data dictionary; uses a reproducible, tested and packaged pipeline                                                              |
 | _Recognise the processes and tools for cleansing and preparing data, and put reusable processes and checks in place_ | Data quality issues logged with recorded decisions; reusable, tested transformation and cleaning functions; unexpected values rejected rather than silently dropped; the pipeline can be re-run on future releases |
-| _Use data manipulation and transformation tools_                                                                     | pandas and openpyxl used to extract, standardise, combine and reshape published statistics                                                            |
-
----
-
-## AI-assisted development
-
-I used Claude and Claude Code as a coding coach during this project:
-
-- **Planning and design:** I used them to question and challenge my decisions as I planned the project, for example its structure, how to load the published tables reliably, and whether to normalise column names before or after combining tables.
-- **Tests:** Claude Code generated most of the unit tests from behaviour I specified. I then wrote the code to make them pass.
-- **Documentation:** Claude Code helped draft this README.
-- **Data processing code:** I wrote the core transformation logic myself (`normalise_name`, `normalise_column_names`, `count_column_names` and `union_tables`) so that I fully understand the process. Where I used AI-suggested code, such as reading named Excel tables in `load.py`, I reviewed and understood a line-by-line explanation before including it.
-
-I reviewed all AI-generated code and take responsibility for everything in this repository.
-
-<!-- Keep this section accurate as the project develops. -->
+| _Use data manipulation and transformation tools_                                                                     | pandas and openpyxl used to extract, standardise, combine and reshape published statistics                                                                                                                         |
 
 ---
 

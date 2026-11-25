@@ -14,9 +14,8 @@ from ons_mental_health.transform import union_tables
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DATA_FILE = PROJECT_ROOT / "data" / "raw" / "mentalhealth2to27april2025.xlsx"
-INTERIM_DATA_DIR = PROJECT_ROOT / "data" / "interim"
-CLEANED_TABLES_FILE = INTERIM_DATA_DIR / "mentalhealth2to27april2025_cleaned.csv"
 PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
+CLEANED_TABLES_FILE = PROCESSED_DATA_DIR / "mentalhealth2to27april2025_cleaned.csv"
 TABLE_QUESTIONS_FILE = PROCESSED_DATA_DIR / "table_questions.csv"
 
 # Shorthand ONS uses in place of a number. See the workbook's Cover sheet.
@@ -32,12 +31,11 @@ def main() -> None:
     df_dict = get_dfs_from_sheets(workbook)
     unioned_df = union_tables(df_dict)
     cleaned_df = handle_suppression_markers(unioned_df, VALUE_COLUMNS, SUPPRESSION_MARKERS)
-    INTERIM_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     cleaned_df.to_csv(CLEANED_TABLES_FILE, index=False)
     print(f"Saved {len(cleaned_df)} rows to {CLEANED_TABLES_FILE}")
 
     table_questions = get_table_titles(workbook)
-    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     table_questions.to_csv(TABLE_QUESTIONS_FILE, index=False)
     print(f"Saved {len(table_questions)} table questions to {TABLE_QUESTIONS_FILE}")
 
