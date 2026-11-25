@@ -1,4 +1,6 @@
+import re
 from pathlib import Path
+
 import pandas as pd
 from openpyxl import load_workbook
 from openpyxl import Workbook
@@ -34,3 +36,29 @@ def get_dfs_from_sheets(workbook: Workbook) -> dict[str, pd.DataFrame]:
         header, *rows = [[cell.value for cell in row] for row in sheet[table.ref]]
         tables[sheet_name] = pd.DataFrame(rows, columns=header)
     return tables
+
+
+def get_table_titles(workbook: Workbook) -> pd.DataFrame:
+    """Build a lookup of each data table's title, taken from cell A1 of its sheet.
+
+    Only sheets whose names start with "Table_" are read. Note references
+    such as "[note 1]" are removed and repeated spaces are collapsed.
+
+    Args:
+        workbook: An open workbook, as returned by
+            ``openpyxl.load_workbook``.
+
+    Returns:
+        One row per table, with columns ``source_table`` (e.g. "Table_5")
+        and ``question``. ``source_table`` matches the column of the same
+        name in the cleaned data, so the two can be merged.
+    """
+    rows = []
+    for sheet_name in workbook.sheetnames:
+        if not sheet_name.startswith("Table_"):
+            continue
+        title = workbook[sheet_name]["A1"].value
+        title = re.sub(r"\[note \d+\]", "", title)
+        title = " ".join(title.split())
+        rows.append({"source_table": sheet_name, "question": title})
+    return pd.DataFrame(rows)
