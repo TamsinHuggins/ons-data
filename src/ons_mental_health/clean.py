@@ -4,6 +4,8 @@ import pandas as pd
 
 
 def handle_suppression_markers(df: pd.DataFrame, columns: list[str], suppression_markers: list[str]) -> pd.DataFrame:
+
+    
     """Replace ONS suppression markers with missing values and flag those rows.
 
     In each of ``columns``, any value in ``suppression_markers`` (e.g. ``"[c]"``)
